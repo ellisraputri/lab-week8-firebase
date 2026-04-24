@@ -2,24 +2,14 @@ import { Image, StyleSheet, View, Button, Alert, TextInput, SafeAreaView, Text }
 import {Link, useLocalSearchParams} from 'expo-router';
 import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-// Import the functions you need from the SDKs you need
 
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 import {firebaseConfig} from "../../firebase.js";
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
+import {createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut} from "firebase/auth";
 
 export default function HomeScreen() {
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
   
 const [loginout, setloginout] = useState('Login');
 const [created, setCreate] = useState('create');
@@ -37,7 +27,18 @@ async function debug(tag: String, str: String) {
 function loginA() {
   setEmail(email);
   setPword(pword);
-    debug("loginA", "login: " + email + " password: " + pword + "success");   
+
+  signInWithEmailAndPassword(auth, email, pword).
+  then((userCredential) => {
+    const user = userCredential.user;
+    debug("already signed in: ", "success " + user.email);
+    setloginout("login: " + user.email);
+  }).catch((error) => {
+    setloginout("login failed: ");
+    debug("login failed", error.code + " "+ error.message);
+  })
+    
+  debug("loginA", "login: " + email + " password: " + pword + "success");   
 }
 
 
@@ -45,23 +46,55 @@ function createA() {
   setEmail(email);
   setPword(pword);
   setCreate('created');
+
+  createUserWithEmailAndPassword(auth, email, pword).
+  then((userCredential) => {
+    const user = userCredential.user;
+    debug("already sign up : ", "success " + user.email);
+    setloginout("signup: " + user.email);
+  }).catch((error) => {
+    setloginout("signup failed: ");
+    debug("signup failed", error.code + " "+ error.message);
+  })
+
+
     debug("createA", "created: "  + email + " password: " + pword);      
 }
 
 function logoutA() {
   setEmail(email);
   setPword(pword);
+
+  signOut(auth).
+  then((userCredential) => {
+    debug("already signed out: ", "success " + email);
+    setloginout("signout: " + email);
+  }).catch((error) => {
+    setloginout("signout failed: ");
+    debug("signout failed", error.code + " "+ error.message);
+  })
+
   debug("createA", "created: "  + email + " password: " + pword);      
 }
 function deleteA() {
   setEmail(email);
   setPword(pword);
+
+  deleteUser(auth.currentUser!). 
+  then((userCredential) => {
+    debug("already deleteuser: ", "success " + email);
+    setloginout("delete user: " + email);
+  }).catch((error) => {
+    setloginout("delete user failed: ");
+    debug("delete user failed", error.code + " "+ error.message);
+  })
+
   debug("deleteA", "Delete: "  + email + " password: " + pword);      
 
 }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style = {styles.bg}>
     <SafeAreaView style = {styles.header}>
           <View style = {styles.colContainer}>
           <View style = {styles.rowContainer}>
@@ -107,6 +140,9 @@ function deleteA() {
 }
 
 const styles = StyleSheet.create({
+  bg : {
+    backgroundColor: "white",
+  },
   header: {
     padding: 40,
     marginBottom: 8,
