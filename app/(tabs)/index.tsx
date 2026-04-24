@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { initializeApp } from "firebase/app";
+import { addDoc, collection, getFirestore } from "firebase/firestore";
 import {firebaseConfig} from "../../firebase.js";
 import {createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut} from "firebase/auth";
+import { dismissBrowser } from 'expo-web-browser';
 
 export default function HomeScreen() {
 const app = initializeApp(firebaseConfig);
@@ -17,11 +19,20 @@ const [pword, setPword] = useState('password');
 const [email, setEmail] = useState('email@mail.com');
 
 let n = 0;
+const db = getFirestore(app);
 
 async function debug(tag: String, str: String) {
   console.log(tag + "No. " + n.toString(), str);
   n++;
   
+  try {
+    const docRef = await addDoc(collection(db, "Debug"), {
+      Tag: tag + "No. " + n.toString(),
+      Str: str,
+    })
+  } catch (error) {
+    console.error("Error adding document: ",error)
+  }
 }
 
 function loginA() {
